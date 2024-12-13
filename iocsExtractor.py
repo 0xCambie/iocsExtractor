@@ -33,7 +33,7 @@ def get_iocs(data):
 
 
 def deliver_csv_output(file_name, iocs_file):
-    with open("csv_output", "a") as f:
+    with open("csv_"+args.output, "a") as f:
         data = f.write("filename, type, value")
         data = f.write("\n")
         for iocs, value in iocs_file.items():
@@ -48,10 +48,10 @@ def deliver_json_output():
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description="Extract IoC from Different types of files.")
-    parser.add_argument('-v', '--verbose', metavar='<on/off>', default='off', help='')
-    parser.add_argument('-o', '--output', metavar='', help='')
-    parser.add_argument('--pdf', metavar='', help='')
-    parser.add_argument('--text', metavar='', help='')
+    parser.add_argument('-v', '--verbose', metavar='<on/off>', default='off', help='sets the output to be verbose. (default = off)')
+    parser.add_argument('-o', '--output', metavar='<output_name>', help='sets the output file.')
+    parser.add_argument('--pdf', metavar='<pdf_file>', help='sets a pdf file as target.')
+    parser.add_argument('--text', metavar='<text_file>', help='sets a general text file as target.')
     args = parser.parse_args()
 
     if args.pdf:
@@ -63,19 +63,29 @@ if __name__=='__main__':
                     text_data = page.extract_text()
                     full_data_stream = full_data_stream + "".join(text_data)
                 pdf_iocs = get_iocs(full_data_stream)
-                deliver_csv_output(args.pdf, pdf_iocs)
-                if args.verbose == 'on':
-                    print(pdf_iocs)
+                if args.output and args.verbose == 'off':
+                    deliver_csv_output(args.pdf, pdf_iocs)
+                elif not args.output and args.verbose =='on':
+                    print(f"IoC from File {args.pdf}:")
+                    for iocs, value in pdf_iocs.items():
+                        for i in value:
+                            print(f"\t{iocs}, {i}\t")
                 else:
-                    pass
+                    print("Try a verbose Output.") 
         except:
             print("Your file is not a PDF.")
     elif args.text:
         with open(args.text, 'r') as f:
             data_stream = f.read()
             text_iocs = get_iocs(data_stream)
-            deliver_csv_output(args.text, text_iocs)
-            if args.verbose == 'on':
-                print(text_iocs)
-    else:
-        pass
+            if args.output and args.verbose == 'off':
+                deliver_csv_output(args.text, text_iocs)
+            elif not args.output and args.verbose =='on':
+                print(f"IoC from File {args.text}:")
+                for iocs, value in text_iocs.items():
+                    for i in value:
+                        print(f"\t{iocs}, {i}\t")
+            else:
+                print("Try a verbose Output.") 
+else:
+        print("Instructions: ./iocsExtractor.py --help\n\n\tExample: ./iocsExtractor.py --pdf <pdf_file_name> -o output")
