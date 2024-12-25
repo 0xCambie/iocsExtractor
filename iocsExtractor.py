@@ -15,8 +15,9 @@ sha1_pattern = re.compile(r"(?<![0-9a-f])[0-9a-f]{40}(?![0-9a-f])")
 sha256_pattern = re.compile(r"(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])")
 sha512_pattern = re.compile(r"[0-9a-f]{128}")
 ipv4_pattern = re.compile(r"(?:[0-9]{1,3}\.){3}[0-9]{1,3}")
+syscall_pattern = re.compile(r"([A-Z][^\s]*)")
 domain_pattern = re.compile(r"(?:[A-Za-z0-9\-]+\.)+[A-Za-z]{2,}")
-url_pattern = re.compile(r"https?://(?:[A-Za-z0-9\-]+\.)+[A-Za-z0-9]{2,}(?::\d{1,5})?[A-Za-z0-9\-%?=\+\.]+")
+url_pattern = re.compile(r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)")
 
 def get_iocs(data):
     results = {}
@@ -26,6 +27,7 @@ def get_iocs(data):
         "sha256": list(set(sha256_pattern.findall(data))),
         "sha512": list(set(sha512_pattern.findall(data))),
         "ipv4": list(set(ipv4_pattern.findall(data))),
+        "syscall": list(set(syscall_pattern.findall(data))),
         "domain": list(set(domain_pattern.findall(data))),
         "url": list(set(url_pattern.findall(data)))
     }
@@ -33,7 +35,7 @@ def get_iocs(data):
 
 
 def deliver_csv_output(file_name, iocs_file):
-    with open("csv_"+args.output, "a") as f:
+    with open(args.output, "a") as f:
         data = f.write("filename, type, value")
         data = f.write("\n")
         for iocs, value in iocs_file.items():
@@ -48,44 +50,35 @@ def deliver_json_output():
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description="Extract IoC from Different types of files.")
-    parser.add_argument('-v', '--verbose', metavar='<on/off>', default='off', help='sets the output to be verbose. (default = off)')
+    parser.add_argument('-v', '--verbose', metavar='<on/off>', default='on', help='sets the output to be verbose. (default = on)')
     parser.add_argument('-o', '--output', metavar='<output_name>', help='sets the output file.')
-    parser.add_argument('--pdf', metavar='<pdf_file>', help='sets a pdf file as target.')
-    parser.add_argument('--text', metavar='<text_file>', help='sets a general text file as target.')
+    parser.add_argument('-f', '--file', metavar='<file>', help='sets a file as target.')
     args = parser.parse_args()
-
-    if args.pdf:
+ 
+    if args.file:
         try:
-            with pdfplumber.open(args.pdf) as pdf:
+            with pdfplumber.open(args.file) as pdf:
                 pdf_pages = pdf.pages
                 full_data_stream = ""
                 for page in pdf_pages:
                     text_data = page.extract_text()
                     full_data_stream = full_data_stream + "".join(text_data)
                 pdf_iocs = get_iocs(full_data_stream)
-                if args.output and args.verbose == 'off':
-                    deliver_csv_output(args.pdf, pdf_iocs)
-                elif not args.output and args.verbose =='on':
-                    print(f"IoC from File {args.pdf}:")
+                if not args.output and args.verbose == 'on':
+                    print(f"IoC from File {args.file}:")
                     for iocs, value in pdf_iocs.items():
                         for i in value:
                             print(f"\t{iocs}, {i}\t")
                 else:
-                    print("Try a verbose Output.") 
+                    deliver_csv_output(args.pdf, pdf_iocs) 
         except:
-            print("Your file is not a PDF.")
-    elif args.text:
-        with open(args.text, 'r') as f:
-            data_stream = f.read()
-            text_iocs = get_iocs(data_stream)
-            if args.output and args.verbose == 'off':
-                deliver_csv_output(args.text, text_iocs)
-            elif not args.output and args.verbose =='on':
-                print(f"IoC from File {args.text}:")
-                for iocs, value in text_iocs.items():
-                    for i in value:
-                        print(f"\t{iocs}, {i}\t")
-            else:
-                print("Try a verbose Output.") 
-else:
-        print("Instructions: ./iocsExtractor.py --help\n\n\tExample: ./iocsExtractor.py --pdf <pdf_file_name> -o output")
+            with open(args.file, 'r') as f:
+                data_stream = f.read()
+                text_iocs = get_iocs(data_stream)
+                if not args.output and args.verbose == 'on':
+                    print(f"IoC from File {args.file}:")
+                    for iocs, value in text_iocs.items():
+                        for i in value:
+                            print(f"\t{iocs}, {i}\t")
+                else:
+                    deliver_csv_output(args.text, text_iocs)
