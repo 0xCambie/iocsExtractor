@@ -27,7 +27,7 @@ def get_iocs(data):
         "sha256": list(set(sha256_pattern.findall(data))),
         "sha512": list(set(sha512_pattern.findall(data))),
         "ipv4": list(set(ipv4_pattern.findall(data))),
-        "syscall": list(set(syscall_pattern.findall(data))),
+        "possible_syscall": list(set(syscall_pattern.findall(data))),
         "domain": list(set(domain_pattern.findall(data))),
         "url": list(set(url_pattern.findall(data)))
     }
