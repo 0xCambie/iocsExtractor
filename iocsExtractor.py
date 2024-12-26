@@ -15,7 +15,7 @@ sha1_pattern = re.compile(r"(?<![0-9a-f])[0-9a-f]{40}(?![0-9a-f])")
 sha256_pattern = re.compile(r"(?<![0-9a-f])[0-9a-f]{64}(?![0-9a-f])")
 sha512_pattern = re.compile(r"[0-9a-f]{128}")
 ipv4_pattern = re.compile(r"(?:[0-9]{1,3}\.){3}[0-9]{1,3}")
-syscall_pattern = re.compile(r"([A-Z][^\s][^\W_]+$)")
+syscall_pattern = re.compile(r"([A-Z][^\s][^\W_]*)")
 domain_pattern = re.compile(r"(?:[A-Za-z0-9\-]+\.)+[A-Za-z]{2,}")
 url_pattern = re.compile(r"https?://(?:[A-Za-z0-9\-]+\.)+[A-Za-z0-9]{2,}(?::\d{1,5})?[/A-Za-z0-9\-%?=\+\.]+")
 
@@ -70,7 +70,7 @@ if __name__=='__main__':
                         for i in value:
                             print(f"\t{iocs}, {i}\t")
                 else:
-                    deliver_csv_output(args.pdf, pdf_iocs) 
+                    deliver_csv_output(args.file, pdf_iocs) 
         except:
             with open(args.file, 'r') as f:
                 data_stream = f.read()
@@ -81,4 +81,4 @@ if __name__=='__main__':
                         for i in value:
                             print(f"\t{iocs}, {i}\t")
                 else:
-                    deliver_csv_output(args.text, text_iocs)
+                    deliver_csv_output(args.file, text_iocs)
